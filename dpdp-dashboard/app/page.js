@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import ScanForm from './ScanForm';
 
 async function getClients() {
   const res = await fetch('http://localhost:3000/api/clients', { cache: 'no-store' });
@@ -11,6 +12,7 @@ export default async function Home() {
   return (
     <main style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
       <h1>DPDP Compliance Dashboard</h1>
+      <ScanForm />
 
       {clients.length === 0 && <p>No clients yet.</p>}
 
