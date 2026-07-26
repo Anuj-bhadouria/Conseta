@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import ReportButton from '../../ReportButton';
 
 async function getClientData(id) {
   const res = await fetch(`http://localhost:3000/api/clients/${id}`, { cache: 'no-store' });
@@ -44,6 +45,7 @@ export default async function ClientDetail({ params }) {
               ))}
             </tbody>
           </table>
+          <ReportButton clientId={id} />
         </>
       ) : (
         <p>No scans yet for this client.</p>

@@ -35,6 +35,16 @@ function checkRules(scan) {
     violations.push({ rule: 'Rule 14 - Data Principal Rights', severity: 'pass', detail: 'Rights-request mechanism appears present (same signal as Rule 8 — verify manually it covers access/correction, not just deletion)' });
   }
 
+  if (scan.isKidOriented) {
+    if (scan.hasAgeGate) {
+      violations.push({ rule: 'Rule 10 - Children\'s Data', severity: 'pass', detail: 'Site appears kid-oriented; age-verification/parental-consent signal detected' });
+    } else {
+      violations.push({ rule: 'Rule 10 - Children\'s Data', severity: 'fail', detail: 'Site appears kid-oriented (content/keywords suggest minors as audience) but no age-gate or parental-consent mechanism detected — DigiLocker-based verifiable parental consent required, no tracking/profiling/targeted ads to children' });
+    }
+  } else {
+    violations.push({ rule: 'Rule 10 - Children\'s Data', severity: 'pass', detail: 'Site does not appear kid-oriented — rule likely not applicable (verify manually if uncertain)' });
+  }
+
   const foreignCookies = scan.cookies.filter(c => KNOWN_FOREIGN_TRACKERS.some(t => c.name.toLowerCase().includes(t)));
   if (foreignCookies.length) {
     violations.push({ rule: 'Rule 15 - Cross-Border Transfer', severity: 'flag', detail: `Foreign-hosted trackers detected: ${foreignCookies.map(c => c.name).join(', ')} — verify compliance, not automatic violation (blocklist model, not GDPR whitelist)` });

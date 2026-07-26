@@ -43,8 +43,25 @@ async function scanSite(url) {
   const cookies = await page.cookies();
   const isHttps = url.startsWith('https://');
 
+  const titleText = await page.title();
+  const metaDescription = await page.$eval('meta[name="description"]', el => el.content).catch(() => '');
+  const bodyText = await page.$eval('body', el => el.innerText).catch(() => '');
+
+  const KID_KEYWORDS = [
+    'kids', 'children', 'toddler', 'preschool', 'k-12', 'k12',
+    'for teens', 'teenager', 'child-friendly', 'parental consent',
+    'kids learning', 'kids game', 'children\'s book', 'age 3', 'age 5',
+    'ages 4-', 'ages 5-', 'ages 6-', 'school students'
+  ];
+  const AGE_GATE_KEYWORDS = ['date of birth', 'birthdate', 'your age', 'parental consent', 'age verification'];
+
+  const combinedText = (titleText + ' ' + metaDescription + ' ' + bodyText).toLowerCase();
+  const isKidOriented = KID_KEYWORDS.some(k => combinedText.includes(k));
+  const hasAgeGate = AGE_GATE_KEYWORDS.some(k => combinedText.includes(k)) ||
+    forms.some(f => f.inputs.includes('date'));
+
   await browser.close();
-  return { forms: uniqueForms, cookies, isHttps, rightsSignals, noticeSignals };
+  return { forms: uniqueForms, cookies, isHttps, rightsSignals, noticeSignals, isKidOriented, hasAgeGate };
 }
 
 export { scanSite };
