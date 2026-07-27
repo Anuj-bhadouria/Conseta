@@ -1,17 +1,42 @@
 import Link from 'next/link';
 import ScanForm from './ScanForm';
+import LogoutButton from './LogoutButton';
+import pool from '../lib/db';
+import { getCurrentUser } from '../lib/auth';
 
-async function getClients() {
-  const res = await fetch('http://localhost:3000/api/clients', { cache: 'no-store' });
-  return res.json();
+async function getClients(userId) {
+  const result = await pool.query(`
+    SELECT
+      c.id,
+      c.domain,
+      c.email,
+      s.id AS scan_id,
+      s.scanned_at,
+      COUNT(v.id) FILTER (WHERE v.severity = 'fail') AS fail_count,
+      COUNT(v.id) FILTER (WHERE v.severity = 'flag') AS flag_count,
+      COUNT(v.id) FILTER (WHERE v.severity = 'pass') AS pass_count
+    FROM clients c
+    LEFT JOIN LATERAL (
+      SELECT * FROM scans WHERE client_id = c.id ORDER BY scanned_at DESC LIMIT 1
+    ) s ON true
+    LEFT JOIN violations v ON v.scan_id = s.id
+    WHERE c.user_id = $1
+    GROUP BY c.id, c.domain, c.email, s.id, s.scanned_at
+    ORDER BY s.scanned_at DESC NULLS LAST
+  `, [userId]);
+  return result.rows;
 }
 
 export default async function Home() {
-  const clients = await getClients();
+  const user = await getCurrentUser();
+  const clients = await getClients(user.userId);
 
   return (
     <main style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
-      <h1>DPDP Compliance Dashboard</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1>DPDP Compliance Dashboard</h1>
+        <LogoutButton />
+      </div>
       <ScanForm />
 
       {clients.length === 0 && <p>No clients yet.</p>}

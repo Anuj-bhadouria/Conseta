@@ -1,8 +1,14 @@
 import pool from '../../../lib/db';
 import { scanSite } from '../../../lib/scanner';
 import { checkRules } from '../../../lib/ruleEngine';
+import { getCurrentUser } from '../../../lib/auth';
 
 export async function POST(request) {
+  const user = await getCurrentUser();
+  if (!user) {
+    return Response.json({ error: 'Not authenticated' }, { status: 401 });
+  }
+
   const { url, email } = await request.json();
 
   if (!url) {
@@ -27,11 +33,11 @@ export async function POST(request) {
 
     const clientKey = 'client_' + Math.random().toString(36).slice(2, 10);
     const clientRes = await client.query(
-      `INSERT INTO clients (domain, email, client_key)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (domain) DO UPDATE SET email = EXCLUDED.email
+      `INSERT INTO clients (domain, email, client_key, user_id)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (domain, user_id) DO UPDATE SET email = EXCLUDED.email
        RETURNING id`,
-      [domain, email || 'unknown@example.com', clientKey]
+      [domain, email || 'unknown@example.com', clientKey, user.userId]
     );
     const clientId = clientRes.rows[0].id;
 

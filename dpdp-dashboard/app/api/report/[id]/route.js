@@ -1,11 +1,17 @@
 import pool from '../../../../lib/db';
 import { callGroq } from '../../../../lib/groq';
+import { getCurrentUser } from '../../../../lib/auth';
 
 export async function POST(request, { params }) {
   const { id } = await params;
 
+  const user = await getCurrentUser();
+  if (!user) {
+    return Response.json({ error: 'Not authenticated' }, { status: 401 });
+  }
+
   try {
-    const clientRes = await pool.query(`SELECT * FROM clients WHERE id = $1`, [id]);
+    const clientRes = await pool.query(`SELECT * FROM clients WHERE id = $1 AND user_id = $2`, [id, user.userId]);
     if (clientRes.rows.length === 0) {
       return Response.json({ error: 'Client not found' }, { status: 404 });
     }

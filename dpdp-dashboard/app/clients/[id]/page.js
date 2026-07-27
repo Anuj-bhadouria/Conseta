@@ -1,16 +1,42 @@
 import Link from 'next/link';
 import ReportButton from '../../ReportButton';
+import pool from '../../../lib/db';
+import { getCurrentUser } from '../../../lib/auth';
 
-async function getClientData(id) {
-  const res = await fetch(`http://localhost:3000/api/clients/${id}`, { cache: 'no-store' });
-  return res.json();
+async function getClientData(id, userId) {
+  const clientRes = await pool.query(`SELECT * FROM clients WHERE id = $1 AND user_id = $2`, [id, userId]);
+  if (clientRes.rows.length === 0) {
+    return { error: 'Client not found' };
+  }
+
+  const scanRes = await pool.query(
+    `SELECT * FROM scans WHERE client_id = $1 ORDER BY scanned_at DESC LIMIT 1`,
+    [id]
+  );
+
+  if (scanRes.rows.length === 0) {
+    return { client: clientRes.rows[0], scan: null, violations: [] };
+  }
+
+  const violationsRes = await pool.query(
+    `SELECT * FROM violations WHERE scan_id = $1 ORDER BY
+      CASE severity WHEN 'fail' THEN 1 WHEN 'flag' THEN 2 ELSE 3 END`,
+    [scanRes.rows[0].id]
+  );
+
+  return {
+    client: clientRes.rows[0],
+    scan: scanRes.rows[0],
+    violations: violationsRes.rows
+  };
 }
 
 const severityColor = { fail: 'red', flag: 'orange', pass: 'green' };
 
 export default async function ClientDetail({ params }) {
   const { id } = await params;
-  const data = await getClientData(id);
+  const user = await getCurrentUser();
+  const data = await getClientData(id, user.userId);
 
   if (data.error) {
     return <main style={{ padding: '2rem' }}>{data.error}</main>;
