@@ -1,7 +1,7 @@
 import puppeteer from 'puppeteer-core';
 import chromium from '@sparticuz/chromium-min';
 
-const CHROMIUM_PACK_URL = 'https://github.com/Sparticuz/chromium/releases/download/v149.0.0/chromium-v149.0.0-pack.tar';
+const CHROMIUM_PACK_URL = 'https://github.com/Sparticuz/chromium/releases/download/v149.0.0/chromium-v149.0.0-pack.x64.tar';
 
 async function getBrowser() {
   // Local override: if CHROME_PATH is set (e.g. path to system Chromium on
