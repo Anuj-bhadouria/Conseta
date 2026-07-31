@@ -1,5 +1,7 @@
 import puppeteer from 'puppeteer-core';
-import chromium from '@sparticuz/chromium';
+import chromium from '@sparticuz/chromium-min';
+
+const CHROMIUM_PACK_URL = 'https://github.com/Sparticuz/chromium/releases/download/v149.0.0/chromium-v149.0.0-pack.tar';
 
 async function getBrowser() {
   // Local override: if CHROME_PATH is set (e.g. path to system Chromium on
@@ -7,11 +9,11 @@ async function getBrowser() {
   if (process.env.CHROME_PATH) {
     return puppeteer.launch({ executablePath: process.env.CHROME_PATH, headless: true });
   }
-  // Otherwise use the serverless-packaged Chromium — works both locally
-  // and on Vercel, so this is also the default fallback.
+  // Otherwise download the serverless-packaged Chromium from the official
+  // release URL at runtime — avoids bundling the binary into the function.
   return puppeteer.launch({
     args: chromium.args,
-    executablePath: await chromium.executablePath(),
+    executablePath: await chromium.executablePath(CHROMIUM_PACK_URL),
     headless: chromium.headless
   });
 }
