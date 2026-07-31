@@ -1,11 +1,8 @@
-const { Pool } = require('pg');
+import { Pool } from 'pg';
 
 const pool = new Pool({
-  user: 'dpdp_user',
-  password: 'aj',   // move to .env.local before sharing/committing
-  host: 'localhost',
-  port: 5432,
-  database: 'dpdp_scanner'
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL?.includes('neon.tech') ? { rejectUnauthorized: false } : false
 });
 
-module.exports = pool;
+export default pool;

@@ -1,4 +1,20 @@
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-core';
+import chromium from '@sparticuz/chromium';
+
+async function getBrowser() {
+  // Local override: if CHROME_PATH is set (e.g. path to system Chromium on
+  // your machine), use that directly — faster/simpler for local dev.
+  if (process.env.CHROME_PATH) {
+    return puppeteer.launch({ executablePath: process.env.CHROME_PATH, headless: true });
+  }
+  // Otherwise use the serverless-packaged Chromium — works both locally
+  // and on Vercel, so this is also the default fallback.
+  return puppeteer.launch({
+    args: chromium.args,
+    executablePath: await chromium.executablePath(),
+    headless: chromium.headless
+  });
+}
 
 function dedupeForms(forms) {
   const seen = new Set();
@@ -11,7 +27,7 @@ function dedupeForms(forms) {
 }
 
 async function scanSite(url) {
-  const browser = await puppeteer.launch();
+  const browser = await getBrowser();
   const page = await browser.newPage();
 
   try {
